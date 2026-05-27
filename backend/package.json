@@ -1,0 +1,20 @@
+{
+  "name": "breezy-agenda-backend",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "Ben Zenittini",
+  "type": "module",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.19.0",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "ts-node": "^10.9.2",
+    "uuid": "^14.0.0"
+  }
+}
