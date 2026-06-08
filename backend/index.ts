@@ -68,6 +68,7 @@ app.post('/api/login', async (req, res) => {
     cachedData[username] = data;
     req.session.regenerate(() => { // Prevent session fixation
       (req.session as any).username = username;
+      (req.session as any).password = password;
       res.status(200).send(data);
     });
     return;
@@ -108,23 +109,25 @@ app.post('/api/create-account', async (req, res) => {
 
 app.put('/api/item', requireAuth, async (req, res) => {
   const username = (req.session as any).username;
-  if (!username) {
+  const password = (req.session as any).password;
+  if (!username || !password) {
     return res.status(503).send('Unexpected session issues.');
   }
   const item = req.body as any;
   cachedData[username].items[item.id] = item;
-  DATA.persistDataFile(username, "password", cachedData[username]);
+  DATA.persistDataFile(username, password, cachedData[username]);
   return res.status(200).send();
 });
 
 app.delete('/api/item', requireAuth, async (req, res) => {
   const username = (req.session as any).username;
-  if (!username) {
+  const password = (req.session as any).password;
+  if (!username || !password) {
     return res.status(503).send('Unexpected session issues.');
   }
   const itemId = req.body.itemId as string;
   delete cachedData[username].items[itemId];
-  DATA.persistDataFile(username, "password", cachedData[username]);
+  DATA.persistDataFile(username, password, cachedData[username]);
   return res.status(200).send();
 });
 
