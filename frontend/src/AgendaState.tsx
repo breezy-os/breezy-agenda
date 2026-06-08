@@ -48,31 +48,33 @@ export function isGoal(item: Partial<AgendaItem>): item is (AgendaItem & AgendaG
   return item.type === 'goal';
 }
 
-function defaultEvent(): AgendaItem {
+type AgendaTypes = 'task' | 'goal' | 'deadline' | 'majorEvent' | 'minorEvent';
+
+function defaultEvent(date?: string, importance?: AgendaEvent['importance']): AgendaItem {
   return {
     id: uuidv4(),
     text: '',
     type: 'event',
-    startDate: DateUtils.formatYYYYMMDD(new Date()),
-    endDate: DateUtils.formatYYYYMMDD(new Date()),
-    importance: 'minor',
+    startDate: date ?? DateUtils.formatYYYYMMDD(new Date()),
+    endDate: date ?? DateUtils.formatYYYYMMDD(new Date()),
+    importance: importance ?? 'minor',
   };
 }
-function defaultDeadline(): AgendaItem {
+function defaultDeadline(date?: string): AgendaItem {
   return {
     id: uuidv4(),
     text: '',
     type: 'deadline',
-    dueDate: DateUtils.formatYYYYMMDD(new Date()),
+    dueDate: date ?? DateUtils.formatYYYYMMDD(new Date()),
     isComplete: false,
   };
 }
-function defaultGoal(): AgendaItem {
+function defaultGoal(date?: string): AgendaItem {
   return {
     id: uuidv4(),
     text: '',
     type: 'goal',
-    dueDate: DateUtils.formatYYYYMMDD(new Date()),
+    dueDate: date ?? DateUtils.formatYYYYMMDD(new Date()),
     isComplete: false,
   };
 }
@@ -96,6 +98,37 @@ export function switchTypes(item: Partial<AgendaItem>, to: AgendaItem['type']) {
     case 'task': newItem = defaultTask(); break;
   }
 
+  // Make startDate/endDate = dueDate = date.
+  //   Event:    startDate, endDate
+  //   Deadline: dueDate
+  //   Goal:     date
+  //   Task:     date
+  if ('date' in item) {
+    if (to === 'event') {
+      newItem.startDate = item.date;
+      newItem.endDate = item.date;
+    } else if (to === 'deadline') {
+      newItem.dueDate = item.date;
+    }
+  } else if ('dueDate' in item) {
+    if (to === 'event') {
+      newItem.startDate = item.dueDate;
+      newItem.endDate = item.dueDate;
+    } else if (to === 'goal') {
+      newItem.date = item.dueDate;
+    } else if (to === 'task') {
+      newItem.date = item.dueDate;
+    }
+  } else if ('startDate' in item) {
+    if (to === 'deadline') {
+      newItem.dueDate = item.startDate;
+    } else if (to === 'goal') {
+      newItem.date = item.startDate;
+    } else if (to === 'task') {
+      newItem.date = item.startDate;
+    }
+  }
+
   // Maintain our exiting values (in case the user switches back and forth)
   newItem = { ...newItem, ...item };
 
@@ -114,6 +147,7 @@ export function isValidItem(item: Partial<AgendaItem> | null): item is AgendaIte
     case 'event':
       if (isEmpty(item.startDate)) return false;
       if (isEmpty(item.endDate)) return false;
+      if (item.startDate! > item.endDate!) return false;
       if (item.importance !== 'major' && item.importance !== 'minor') return false;
       break;
     case 'deadline':
@@ -165,7 +199,7 @@ export type AgendaState = {
     logOut: () => void;
     updateEditedItem: (data: Partial<AgendaItem>) => void;
     clearEditedItem: () => void;
-    beginItemCreation: (date?: string) => void;
+    beginItemCreation: (date?: string, type?: AgendaTypes) => void;
     removeItem: (item: null | Partial<AgendaItem>) => void;
     addItem: (item: AgendaItem) => void;
     chooseDate: (newDate: string) => void;
@@ -208,8 +242,22 @@ export const useAgendaStore = create<AgendaState>((set) => {
       updateEditedItem: (data: Partial<AgendaItem>) => {
         set(state => ({ ...state, itemBeingEdited: data }));
       },
-      beginItemCreation: (date?: string) => {
-        set(state => ({ ...state, itemBeingEdited: defaultTask(date) }));
+      beginItemCreation: (date?: string, type?: AgendaTypes) => {
+        set(state => {
+          if (state.itemBeingEdited == null) {
+            let item;
+            switch (type) {
+              case 'task': item = defaultTask(date); break;
+              case 'goal': item = defaultGoal(date); break;
+              case 'deadline': item = defaultDeadline(date); break;
+              case 'majorEvent': item = defaultEvent(date, 'major'); break;
+              case 'minorEvent': item = defaultEvent(date, 'minor'); break;
+              default: item = defaultTask(date);
+            }
+            return { ...state, itemBeingEdited: item };
+          }
+          return state;
+        });
       },
       clearEditedItem: () => {
         set(state => ({ ...state, itemBeingEdited: null }));

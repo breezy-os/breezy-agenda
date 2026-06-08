@@ -3,6 +3,9 @@ export function yyyymmdd(year: number, month: number, day: number) {
   return `${('0000' + year).slice(-4)}-${('00' + month).slice(-2)}-${('00' + day).slice(-2)}`
 }
 
+export function formatUtcYYYYMMDD(date: Date) {
+  return yyyymmdd(date.getUTCFullYear(), date.getUTCMonth()+1, date.getUTCDate());
+}
 export function formatYYYYMMDD(date: Date) {
   return yyyymmdd(date.getFullYear(), date.getMonth()+1, date.getDate());
 }

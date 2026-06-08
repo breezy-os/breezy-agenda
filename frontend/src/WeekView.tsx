@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { END_YEAR, START_YEAR, useAgendaStore } from "./AgendaState";
-import { formatYYYYMMDD, generateDateRange, yyyymmdd } from "./utilities/DateUtils";
+import { formatUtcYYYYMMDD, generateDateRange, yyyymmdd } from "./utilities/DateUtils";
 import DayView from "./DayView";
 
 export default function WeekView() {
@@ -60,10 +60,10 @@ export default function WeekView() {
     // Start with the chosen date
     let date = new Date(chosenDate);
     // Go back to the first day of the week
-    const padStart = (date.getUTCDay() + 6) % 7;
+    const padStart = (date.getUTCDay() + 7) % 7;
     date.setUTCDate(date.getUTCDate() - padStart);
     // Use that to build our week key
-    const chosenWeek = `week-${formatYYYYMMDD(date)}`
+    const chosenWeek = `week-${formatUtcYYYYMMDD(date)}`;
     // ...and then scroll to it
     const el = weekRefs.current[chosenWeek];
     if (el) {
@@ -77,12 +77,12 @@ export default function WeekView() {
     let endDate = new Date(yyyymmdd(END_YEAR, 12, 31));
 
     // Figure out how many days to pad the start and end
-    const padStart = (startDate.getUTCDay() + 6) % 7;
-    const padEnd = (7 - endDate.getUTCDay());
-    startDate.setDate(startDate.getDate() - padStart);
-    endDate.setDate(endDate.getDate() + padEnd);
+    const padStart = (startDate.getUTCDay() + 7) % 7;
+    const padEnd = (6 - endDate.getUTCDay());
+    startDate.setUTCDate(startDate.getUTCDate() - padStart);
+    endDate.setUTCDate(endDate.getUTCDate() + padEnd);
     // Create an array of dates
-    const dates = generateDateRange(formatYYYYMMDD(startDate), formatYYYYMMDD(endDate));
+    const dates = generateDateRange(formatUtcYYYYMMDD(startDate), formatUtcYYYYMMDD(endDate));
 
     let currYear = dates[6].slice(0,4); // Year of the last day in the initial week.
     let weekCount = 1;

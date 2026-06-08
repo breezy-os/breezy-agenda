@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { isDeadline, isEvent, isGoal, isTask, isValidItem, removeNonessentialFields, switchTypes, useAgendaStore } from "./AgendaState";
 import type { AgendaEvent, AgendaItem } from "./AgendaState";
@@ -9,6 +9,8 @@ import * as REST from './rest-calls';
 export default function EditItem() {
   const item = useAgendaStore(state => state.itemBeingEdited);
   const { beginItemCreation, updateEditedItem, clearEditedItem, removeItem, addItem } = useAgendaStore(state => state.actions);
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const isValid = useMemo(() => isValidItem(item), [item]);
 
@@ -26,6 +28,9 @@ export default function EditItem() {
       setInitialItem(null);
     } else if (initialItem == null) {
       setInitialItem({...item});
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   }, [item]);
 
@@ -80,7 +85,7 @@ export default function EditItem() {
         <div>
           <label style={{ display: 'flex', alignItems: 'center' }}>
             <span>Text:</span>
-            <input type="text" style={{ flex: '1 1' }} onChange={(t) => updateItem({ text: t.target.value })} value={item.text} />
+            <input type="text" ref={inputRef} style={{ flex: '1 1' }} onChange={(t) => updateItem({ text: t.target.value })} value={item.text} />
           </label>
         </div>
         <div>
